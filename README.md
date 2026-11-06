@@ -127,3 +127,42 @@ POST http://localhost:8080/books
 PUT http://localhost:8080/books/42
 DELETE http://localhost:8080/books/42
 ```
+
+### Entrega 2 — CRUD JSON en memoria
+
+En esta entrega cambiamos el controlador para que reciba y devuelva JSON. Creamos el modelo `Book` en `model` y dos DTOs con records en `dto`:
+- `BookRequestDTO(isbn, title, author, year)`: para los datos que nos envían al crear o modificar.
+- `BookResponseDTO(id, isbn, title, author, year)`: para devolver los datos junto con el `id` autogenerado.
+
+Los libros se guardan en memoria en un `ConcurrentHashMap` y los identificadores se van generando con un `AtomicLong`. De momento el `POST` devuelve `200 OK` (según pide el contrato de esta entrega antes de pasar a `201` en la siguiente) y `DELETE` también devuelve `200`.
+
+| Operación | Verbo | Ruta | Entrada | Respuesta HTTP |
+|---|---|---|---|---|
+| Listar libros | `GET` | `/books` | Ninguna | `200 OK` con lista en JSON `[]` |
+| Obtener un libro | `GET` | `/books/{id}` | `id` en URL | `200 OK` con `BookResponseDTO` |
+| Crear libro | `POST` | `/books` | JSON `BookRequestDTO` | `200 OK` con `BookResponseDTO` (con nuevo id) |
+| Actualizar libro | `PUT` | `/books/{id}` | `id` en URL + JSON `BookRequestDTO` | `200 OK` con `BookResponseDTO` actualizado |
+| Borrar libro | `DELETE` | `/books/{id}` | `id` en URL | `200 OK` |
+
+Ejemplos HTTP para probar esta entrega:
+
+```http
+### Crear libro (devuelve 200 con el id asignado)
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{"isbn":"978-1","title":"DDD","author":"Evans","year":2003}
+
+### Consultar el libro creado usando el id obtenido
+GET http://localhost:8080/books/1
+Accept: application/json
+
+### Actualizar el libro
+PUT http://localhost:8080/books/1
+Content-Type: application/json
+
+{"isbn":"978-1","title":"Updated","author":"Evans","year":2004}
+
+### Borrar el libro
+DELETE http://localhost:8080/books/1
+```
