@@ -17,3 +17,12 @@
 - Refactorización: Hicimos un método auxiliar `toResponseDTO(Book)` en el controlador para no repetir la conversión del modelo al DTO en cada endpoint.
 - Decisiones sobre capas y contrato HTTP: Mantenemos el CRUD dentro de `BookController` en esta fase. Usamos DTOs distintos para la entrada (sin id) y la salida (con id autogenerado). El código de creación `POST` sigue devolviendo 200 OK según marca el contrato de esta entrega.
 - Contribuciones, revisión y siguiente paso: Abel implementa el modelo, los DTOs y el controlador JSON. Siguiente paso: Entrega 3 para ajustar los códigos HTTP usando `ResponseEntity` (201 Created con cabecera Location y 204 No Content para borrado).
+
+## Entrega 3 — ResponseEntity
+
+- Comportamiento que añadimos o contrato que evolucionamos: Expresar con exactitud los códigos y cabeceras HTTP usando `ResponseEntity`. El POST ahora responde 201 Created con la cabecera `Location` hacia el recurso creado (`/books/{id}`), y el DELETE responde 204 No Content sin cuerpo.
+- Test y rojo observado (distinguir compilación/configuración de comportamiento): Al activar la semilla 3 y ejecutar los tests, vimos el rojo en `BookCheckpoint03Test`: fallaba porque esperaba código 201 en la creación y recibía 200 (`Status expected:<201> but was:<200>`), y además faltaba la cabecera `Location`.
+- Cambio mínimo y resultado verde: Envolvemos los retornos de `BookController` con `ResponseEntity`. Usamos `ResponseEntity.created(URI.create("/books/" + id)).body(...)` en el POST y `ResponseEntity.noContent().build()` en el DELETE. Al pasar de nuevo los tests, la suite quedó en verde.
+- Refactorización: Homogeneizamos todo el controlador para devolver `ResponseEntity` en todos los métodos (`ok()`, `created()`, `notFound()`, `noContent()`).
+- Decisiones sobre capas y contrato HTTP: Los códigos HTTP y las cabeceras pertenecen exclusivamente a la capa web (`Controller`). Cuando en la entrega 4 se extraiga la capa de servicio, el servicio no debe conocer nada de `ResponseEntity` ni de `Location`.
+- Contribuciones, revisión y siguiente paso: Abel completa las entregas 1, 2 y 3. Con esto queda terminada mi parte del trabajo asignado. El siguiente paso le corresponde a mi compañero Inda para la Entrega 4 (extraer la lógica a `BookService`).

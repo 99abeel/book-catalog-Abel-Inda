@@ -166,3 +166,41 @@ Content-Type: application/json
 ### Borrar el libro
 DELETE http://localhost:8080/books/1
 ```
+
+### Entrega 3 — ResponseEntity
+
+En esta entrega mejoramos los códigos HTTP usando `ResponseEntity` en todos los métodos del controlador:
+- Al crear con `POST /books`, ahora devolvemos un código `201 Created` y añadimos la cabecera `Location: /books/{id}` que apunta a la URL del nuevo recurso creado, además del JSON en el cuerpo.
+- Al borrar con `DELETE /books/{id}`, devolvemos un código `204 No Content` sin cuerpo en la respuesta.
+- Las consultas `GET` y las modificaciones `PUT` siguen respondiendo `200 OK` con su DTO en el cuerpo.
+
+| Operación | Verbo | Ruta | Código HTTP | Cabeceras destacadas | Cuerpo |
+|---|---|---|---|---|---|
+| Listar libros | `GET` | `/books` | `200 OK` | `Content-Type: application/json` | Array de libros `[]` |
+| Obtener un libro | `GET` | `/books/{id}` | `200 OK` (o `404`) | `Content-Type: application/json` | `BookResponseDTO` |
+| Crear libro | `POST` | `/books` | `201 Created` | `Location: /books/{id}` | `BookResponseDTO` |
+| Actualizar libro | `PUT` | `/books/{id}` | `200 OK` | `Content-Type: application/json` | `BookResponseDTO` |
+| Borrar libro | `DELETE` | `/books/{id}` | `204 No Content` | - | Vacío |
+
+Ejemplos HTTP para probar esta entrega:
+
+```http
+### Crear libro (devuelve 201 Created y cabecera Location: /books/1)
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{"isbn":"978-1","title":"Refactoring","author":"Fowler","year":1999}
+
+### Consultar con la Location obtenida
+GET http://localhost:8080/books/1
+Accept: application/json
+
+### Modificar el libro (devuelve 200 OK con los datos nuevos)
+PUT http://localhost:8080/books/1
+Content-Type: application/json
+
+{"isbn":"978-1","title":"Refactoring 2","author":"Fowler","year":2018}
+
+### Borrar el libro (devuelve 204 No Content sin cuerpo)
+DELETE http://localhost:8080/books/1
+```
