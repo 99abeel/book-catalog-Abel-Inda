@@ -103,3 +103,27 @@ alternativas por cada etapa ni se piden capturas como evidencia principal.
 La **sesión 5 de Battleship** enseña el advice que se aplica a la **entrega 6 de
 Book Catalog**. No confundir los dos números. Al acabar, cada integrante debe
 poder ejecutar y defender su slice, sus pruebas y su contribución en Git.
+
+## 6. Documentación de endpoints y decisiones
+
+### Entrega 1 — Echo text
+
+En esta primera entrega tenemos un controlador básico (`BookController`) que responde a las peticiones en la ruta `/books` devolviendo solo texto plano y código 200 OK. Todavía no usamos JSON ni guardamos nada en memoria.
+
+| Verbo | Ruta | Parámetros | Respuesta que da | Qué hace |
+|---|---|---|---|---|
+| `GET` | `/books` | Ninguno | `GET /books` | Pide la lista de libros (devuelve el texto del eco). |
+| `GET` | `/books/{id}` | `Long id` (de la URL con `@PathVariable`) | `GET /books/{id}` | Pide un libro por su id y responde el texto con ese id. |
+| `POST` | `/books` | Ninguno | `POST /books` | Simula crear un libro respondiendo con el texto. |
+| `PUT` | `/books/{id}` | `Long id` (de la URL con `@PathVariable`) | `PUT /books/{id}` | Simula modificar un libro existente con ese id. |
+| `DELETE` | `/books/{id}` | `Long id` (de la URL con `@PathVariable`) | `DELETE /books/{id}` | Simula borrar un libro con ese id. |
+
+Ejemplos para probarlos en el cliente HTTP (de `classroom/ejemplos.http`):
+
+```http
+GET http://localhost:8080/books
+GET http://localhost:8080/books/42
+POST http://localhost:8080/books
+PUT http://localhost:8080/books/42
+DELETE http://localhost:8080/books/42
+```
