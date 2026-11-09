@@ -272,3 +272,83 @@ DELETE http://localhost:8080/books/99
 En esta etapa el cuerpo de error todavía puede estar vacío; el formato uniforme se incorpora en la
 entrega 6. `BookServiceTest` se amplía para comprobar que el servicio lanza realmente ambas
 excepciones, no solo que el controlador sepa reaccionar ante un mock.
+
+### Entrega 6 — Advice global y error uniforme
+
+En esta entrega centralizamos el manejo de errores en
+`com.example.catalog.web.GlobalExceptionHandler` con `@RestControllerAdvice`. También activamos
+`@Valid` en los cuerpos de entrada y las restricciones de Bean Validation:
+
+- `@NotBlank` en `isbn`, `title` y `author`.
+- `@Min(0)` en `year`.
+
+El controlador ya no tiene `try/catch` ni `@ExceptionHandler` locales: todas las excepciones se
+traducen en el advice. El cuerpo de error es un `ApiError` con los campos `error`, `message` y
+`timestamp`; el timestamp se genera en cada respuesta.
+
+| Excepción o situación | HTTP | `error` | `message` |
+|---|---:|---|---|
+| `BookNotFoundException` | `404` | `NOT_FOUND` | Explica el id que no existe. |
+| `InvalidBookException` | `400` | `BAD_REQUEST` | Explica qué dato no es válido. |
+| `MethodArgumentNotValidException` | `400` | `VALIDATION_ERROR` | Primer error de validación del campo. |
+| JSON ilegible | `400` | `BAD_REQUEST` | `Malformed JSON request`. |
+| Fallo inesperado | `500` | `INTERNAL_ERROR` | `Unexpected error`, sin detalles internos. |
+
+Ejemplos de respuesta de error:
+
+```json
+{
+  "error": "NOT_FOUND",
+  "message": "Book not found with id 99",
+  "timestamp": "2026-11-09T20:00:00Z"
+}
+```
+
+```json
+{
+  "error": "VALIDATION_ERROR",
+  "message": "title: must not be blank",
+  "timestamp": "2026-11-09T20:00:00Z"
+}
+```
+
+Ejemplos HTTP para provocar los errores:
+
+```http
+### Recurso inexistente -> 404 NOT_FOUND
+GET http://localhost:8080/books/99
+
+### Datos inválidos -> 400 VALIDATION_ERROR
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{"isbn":"978-1","title":" ","author":"Evans","year":2003}
+
+### JSON ilegible -> 400 BAD_REQUEST
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{
+```
+
+Además de la semilla MVC con servicio mockeado, se añade `BookApiIntegrationTest`, que recorre el
+CRUD real contra el servicio y el almacenamiento en memoria, y comprueba los cuerpos de error
+`NOT_FOUND`, `VALIDATION_ERROR` y `BAD_REQUEST`. Esa prueba es la regresión del comportamiento real
+del catálogo, no solo de la delegación del controlador.
+
+### Resumen del contrato final
+
+| Operación | Verbo y ruta | Éxito | Cabeceras / cuerpo | Errores esperables |
+|---|---|---|---|---|
+| Listar | `GET /books` | `200 OK` | Array de `BookResponseDTO` | — |
+| Consultar | `GET /books/{id}` | `200 OK` | `BookResponseDTO` | `404 NOT_FOUND` |
+| Crear | `POST /books` | `201 Created` | `Location: /books/{id}` + `BookResponseDTO` | `400 BAD_REQUEST`, `400 VALIDATION_ERROR` |
+| Actualizar | `PUT /books/{id}` | `200 OK` | `BookResponseDTO` | `404 NOT_FOUND`, `400 BAD_REQUEST`, `400 VALIDATION_ERROR` |
+| Borrar | `DELETE /books/{id}` | `204 No Content` | Sin cuerpo | `404 NOT_FOUND` |
+
+Decisiones finales:
+
+- El controlador decide el código HTTP y las cabeceras; el servicio no conoce `ResponseEntity` ni `Location`.
+- Los DTOs separan la entrada (`BookRequestDTO`, sin id) de la salida (`BookResponseDTO`, con id).
+- Los errores esperables devuelven mensajes explicativos; el error inesperado devuelve un mensaje genérico.
+- El almacenamiento sigue en memoria; no se añaden JPA, H2, seguridad ni migraciones porque el contrato de esta práctica no las exige.
