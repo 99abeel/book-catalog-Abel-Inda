@@ -26,3 +26,12 @@
 - Refactorización: Homogeneizamos todo el controlador para devolver `ResponseEntity` en todos los métodos (`ok()`, `created()`, `notFound()`, `noContent()`).
 - Decisiones sobre capas y contrato HTTP: Los códigos HTTP y las cabeceras pertenecen exclusivamente a la capa web (`Controller`). Cuando en la entrega 4 se extraiga la capa de servicio, el servicio no debe conocer nada de `ResponseEntity` ni de `Location`.
 - Contribuciones, revisión y siguiente paso: Abel completa las entregas 1, 2 y 3. Con esto queda terminada mi parte del trabajo asignado. El siguiente paso le corresponde a mi compañero Inda para la Entrega 4 (extraer la lógica a `BookService`).
+
+## Entrega 4 — Servicio y delegación
+
+- Comportamiento que añadimos o contrato que evolucionamos: Extraemos la lógica de negocio del controlador a `com.example.catalog.service.BookService`. El controlador pasa a delegar por constructor y el servicio se encarga del almacenamiento en memoria, la generación de ids y la conversión de `Book` a `BookResponseDTO`.
+- Test y rojo observado (distinguir compilación/configuración de comportamiento): Al activar la semilla 4, el primer rojo era de compilación porque `BookCheckpoint04Test` importaba `BookService` y el proyecto todavía no tenía esa clase. Creamos la estructura mínima y después comprobamos el comportamiento: el controlador debía usar el id devuelto por el mock para construir `Location: /books/17`.
+- Cambio mínimo y resultado verde: Movimos el `ConcurrentHashMap` y el `AtomicLong` a `BookService`, añadimos los métodos `list`, `get`, `create`, `update` y `delete`, e inyectamos el servicio en `BookController`. La semilla 4 y la suite completa quedaron en verde.
+- Refactorización: Añadimos `BookServiceTest` para probar el servicio real sin mocks: creación con id generado, listado, actualización conservando el id y borrado. También ordenamos el listado por id para que el resultado sea determinista.
+- Decisiones sobre capas y contrato HTTP: El servicio devuelve DTOs y no conoce tipos HTTP. El controlador sigue siendo el único responsable de `ResponseEntity`, de `201 Created` y de la cabecera `Location`. No se introduce JPA ni base de datos: el almacenamiento sigue en memoria.
+- Contribuciones, revisión y siguiente paso: Inda implementa la entrega 4. Siguiente paso: entrega 5, definir excepciones propias en el servicio y mapearlas localmente a `404` y `400`.

@@ -204,3 +204,37 @@ Content-Type: application/json
 ### Borrar el libro (devuelve 204 No Content sin cuerpo)
 DELETE http://localhost:8080/books/1
 ```
+
+### Entrega 4 — Servicio y delegación
+
+En esta entrega extraemos la lógica de negocio del controlador a `com.example.catalog.service.BookService`.
+El controlador queda como una capa delgada que traduce HTTP y delega en el servicio:
+
+- `BookService` guarda los libros en un `ConcurrentHashMap`, genera los ids con un `AtomicLong` y convierte el modelo `Book` a `BookResponseDTO`.
+- El controlador recibe el servicio por constructor, sin crear el almacenamiento ni las reglas.
+- El servicio no conoce `ResponseEntity`, códigos HTTP ni la cabecera `Location`; devuelve DTOs y el controlador decide el estado de la respuesta.
+- La creación sigue respondiendo `201 Created` con `Location: /books/{id}`, usando el id que devuelve el servicio.
+
+| Operación | Verbo | Ruta | Capa que decide el resultado |
+|---|---|---|---|
+| Listar libros | `GET` | `/books` | `BookController` → `BookService.list()` |
+| Obtener un libro | `GET` | `/books/{id}` | `BookController` → `BookService.get(id)` |
+| Crear libro | `POST` | `/books` | `BookController` → `BookService.create(request)` |
+| Actualizar libro | `PUT` | `/books/{id}` | `BookController` → `BookService.update(id, request)` |
+| Borrar libro | `DELETE` | `/books/{id}` | `BookController` → `BookService.delete(id)` |
+
+Ejemplo de creación y consulta usando el id devuelto:
+
+```http
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{"isbn":"978-1","title":"DDD","author":"Evans","year":2003}
+
+### La respuesta incluye el id generado y Location: /books/{id}
+GET http://localhost:8080/books/1
+Accept: application/json
+```
+
+Además de la semilla MVC, se añade `BookServiceTest`, una prueba unitaria del servicio real que
+comprueba que los libros se guardan, se listan, se actualizan y se borran sin depender de mocks.
