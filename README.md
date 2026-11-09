@@ -238,3 +238,37 @@ Accept: application/json
 
 Además de la semilla MVC, se añade `BookServiceTest`, una prueba unitaria del servicio real que
 comprueba que los libros se guardan, se listan, se actualizan y se borran sin depender de mocks.
+
+### Entrega 5 — Excepciones propias y mapeo local
+
+En esta entrega el servicio deja de devolver `null` o ignorar operaciones sobre libros inexistentes.
+Se añaden dos excepciones de aplicación en `com.example.catalog.service`:
+
+- `BookNotFoundException`: se lanza cuando se consulta, actualiza o borra un libro que no existe.
+- `InvalidBookException`: se lanza cuando los datos del libro no cumplen las reglas mínimas
+  (isbn, título o autor vacíos, o año negativo).
+
+El controlador las traduce localmente, sin mover todavía el mapeo a un advice global:
+
+| Situación | Excepción | Código HTTP |
+|---|---|---|
+| Consultar, actualizar o borrar un id inexistente | `BookNotFoundException` | `404 Not Found` |
+| Crear o actualizar con datos inválidos | `InvalidBookException` | `400 Bad Request` |
+
+```http
+### Consultar un libro que no existe -> 404
+GET http://localhost:8080/books/99
+
+### Crear un libro con datos inválidos -> 400
+POST http://localhost:8080/books
+Content-Type: application/json
+
+{"isbn":"978-1","title":" ","author":"Evans","year":2003}
+
+### Borrar un libro que no existe -> 404
+DELETE http://localhost:8080/books/99
+```
+
+En esta etapa el cuerpo de error todavía puede estar vacío; el formato uniforme se incorpora en la
+entrega 6. `BookServiceTest` se amplía para comprobar que el servicio lanza realmente ambas
+excepciones, no solo que el controlador sepa reaccionar ante un mock.

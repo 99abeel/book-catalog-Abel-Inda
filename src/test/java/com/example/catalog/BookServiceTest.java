@@ -2,10 +2,13 @@ package com.example.catalog;
 
 import com.example.catalog.dto.BookRequestDTO;
 import com.example.catalog.dto.BookResponseDTO;
+import com.example.catalog.service.BookNotFoundException;
 import com.example.catalog.service.BookService;
+import com.example.catalog.service.InvalidBookException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BookServiceTest {
 
@@ -48,6 +51,44 @@ class BookServiceTest {
 
         service.delete(created.id());
 
-        assertThat(service.get(created.id())).isNull();
+        assertThatThrownBy(() -> service.get(created.id()))
+                .isInstanceOf(BookNotFoundException.class);
+    }
+
+    @Test
+    void rejectsAnInvalidBook() {
+        BookRequestDTO invalid = new BookRequestDTO("978-1", " ", "Evans", 2003);
+
+        assertThatThrownBy(() -> service.create(invalid))
+                .isInstanceOf(InvalidBookException.class)
+                .hasMessage("Book data is not valid");
+    }
+
+    @Test
+    void rejectsANegativeYear() {
+        BookRequestDTO invalid = new BookRequestDTO("978-1", "DDD", "Evans", -1);
+
+        assertThatThrownBy(() -> service.create(invalid))
+                .isInstanceOf(InvalidBookException.class);
+    }
+
+    @Test
+    void reportsAMissingBookWhenReading() {
+        assertThatThrownBy(() -> service.get(99L))
+                .isInstanceOf(BookNotFoundException.class)
+                .hasMessageContaining("99");
+    }
+
+    @Test
+    void reportsAMissingBookWhenUpdating() {
+        assertThatThrownBy(() -> service.update(99L, request))
+                .isInstanceOf(BookNotFoundException.class);
+    }
+
+    @Test
+    void reportsAMissingBookWhenDeleting() {
+        assertThatThrownBy(() -> service.delete(99L))
+                .isInstanceOf(BookNotFoundException.class)
+                .hasMessageContaining("99");
     }
 }

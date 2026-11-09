@@ -35,3 +35,12 @@
 - Refactorización: Añadimos `BookServiceTest` para probar el servicio real sin mocks: creación con id generado, listado, actualización conservando el id y borrado. También ordenamos el listado por id para que el resultado sea determinista.
 - Decisiones sobre capas y contrato HTTP: El servicio devuelve DTOs y no conoce tipos HTTP. El controlador sigue siendo el único responsable de `ResponseEntity`, de `201 Created` y de la cabecera `Location`. No se introduce JPA ni base de datos: el almacenamiento sigue en memoria.
 - Contribuciones, revisión y siguiente paso: Inda implementa la entrega 4. Siguiente paso: entrega 5, definir excepciones propias en el servicio y mapearlas localmente a `404` y `400`.
+
+## Entrega 5 — Excepciones propias y mapeo local
+
+- Comportamiento que añadimos o contrato que evolucionamos: El servicio deja de devolver `null` o de ignorar operaciones sobre libros inexistentes. Añadimos `BookNotFoundException` para recursos que no existen y `InvalidBookException` para datos rechazados, y el controlador las traduce a `404` y `400`.
+- Test y rojo observado (distinguir compilación/configuración de comportamiento): Al activar la semilla 5, el rojo era de compilación porque faltaban las dos excepciones importadas por `BookCheckpoint05Test`. Tras crear las clases y lanzarlas desde el servicio, el rojo de comportamiento se centró en el mapeo: `get` y `delete` debían devolver `404`, y `create` debía devolver `400`.
+- Cambio mínimo y resultado verde: Añadimos las excepciones, hicimos que `get`, `update` y `delete` comprobaran la existencia del libro, validamos los datos en `create` y `update`, y añadimos dos `@ExceptionHandler` locales en `BookController`. La semilla 5 y la suite quedaron en verde.
+- Refactorización: Ampliamos `BookServiceTest` con casos negativos: lectura, actualización y borrado de un id inexistente, y rechazo de título vacío o año negativo. Así se prueba el servicio real y no solo la reacción del controlador ante un mock.
+- Decisiones sobre capas y contrato HTTP: Las excepciones son de aplicación y no contienen tipos HTTP. El servicio decide cuándo se produce el error de negocio; el controlador decide el código de estado. No usamos `404` para todos los fallos ni devolvemos `null` como sustituto de una excepción específica.
+- Contribuciones, revisión y siguiente paso: Inda implementa la entrega 5. Siguiente paso: entrega 6, centralizar el mapeo en un `@RestControllerAdvice` y devolver un cuerpo de error uniforme.

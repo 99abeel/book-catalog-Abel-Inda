@@ -2,7 +2,9 @@ package com.example.catalog.web;
 
 import com.example.catalog.dto.BookRequestDTO;
 import com.example.catalog.dto.BookResponseDTO;
+import com.example.catalog.service.BookNotFoundException;
 import com.example.catalog.service.BookService;
+import com.example.catalog.service.InvalidBookException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,11 +28,7 @@ public class BookController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BookResponseDTO> getOne(@PathVariable("id") Long id) {
-        BookResponseDTO book = service.get(id);
-        if (book == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(book);
+        return ResponseEntity.ok(service.get(id));
     }
 
     @PostMapping
@@ -49,5 +47,15 @@ public class BookController {
     public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(BookNotFoundException.class)
+    public ResponseEntity<Void> handleBookNotFound(BookNotFoundException exception) {
+        return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(InvalidBookException.class)
+    public ResponseEntity<Void> handleInvalidBook(InvalidBookException exception) {
+        return ResponseEntity.badRequest().build();
     }
 }
